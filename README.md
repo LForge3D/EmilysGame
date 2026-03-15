@@ -46,83 +46,103 @@ button:hover{background:#388e3c}
 
 <script>
 
-let score = Number(localStorage.getItem("score")) || 0
-let level = Number(localStorage.getItem("level")) || 1
+// reset progress if questions don't exist for stored level
+let savedLevel = Number(localStorage.getItem("level")) || 1
+if(savedLevel > 3) savedLevel = 1
 
-let currentQuestionIndex = 0
-let incorrectQueue = []
+let score = Number(localStorage.getItem("score")) || 0
+let level = savedLevel
+
+let currentQuestions = []
+let incorrectQuestions = []
+let currentIndex = 0
 let currentQuestion = null
 
 const questionBank = [
 
-// Level 1 easier
+// LEVEL 1
 {
 level:1,
-type:"math",
-question:"You have 5 apples. You get 4 more. How many apples now?",
-choices:["9","7","8","10"],
-answer:"9"
-},
-
-{
-level:1,
-type:"math",
-question:"There are 12 cookies. 3 are eaten. How many are left?",
-choices:["9","8","10","7"],
-answer:"9"
-},
-
-{
-level:1,
-type:"reading",
-passage:"Liam was exhausted after running the race. He sat down and drank a big bottle of water.",
-question:"What does the word 'exhausted' most likely mean?",
-choices:["Very tired","Very excited","Very angry","Very hungry"],
+passage:"Liam ran the whole race without stopping. After finishing, he sat down and drank water because he felt exhausted.",
+question:"Based on the story, what does the word 'exhausted' most likely mean?",
+choices:["Very tired","Very happy","Very angry","Very loud"],
 answer:"Very tired"
 },
 
 {
 level:1,
-type:"reading",
-passage:"Sophie dropped her ice cream on the ground. A little boy nearby started to cry because he lost his toy.",
-question:"What would be a kind thing for Sophie to do?",
-choices:["Help the boy look for the toy","Ignore him","Laugh at him","Walk away"],
-answer:"Help the boy look for the toy"
-},
-
-// Level 2
-{
-level:2,
-type:"math",
-question:"Each box has 6 pencils. If you have 3 boxes how many pencils total?",
-choices:["18","12","15","20"],
-answer:"18"
+question:"You have 8 marbles. Your friend gives you 5 more. How many marbles do you have now?",
+choices:["13","11","12","14"],
+answer:"13"
 },
 
 {
+level:1,
+passage:"Sofia noticed the classroom fish swimming slowly near the top of the tank and the water looked dirty.",
+question:"What should Sofia probably tell the teacher?",
+choices:["The fish tank needs cleaning","The fish wants candy","The fish needs music","Nothing is wrong"],
+answer:"The fish tank needs cleaning"
+},
+
+{
+level:1,
+question:"There are 15 cookies. 6 get eaten. How many are left?",
+choices:["9","8","10","7"],
+answer:"9"
+},
+
+// LEVEL 2
+{
 level:2,
-type:"math",
-question:"You read 14 pages Monday and 11 Tuesday. How many total?",
-choices:["25","24","26","23"],
-answer:"25"
+question:"Each box has 6 crayons. You buy 4 boxes. How many crayons do you have?",
+choices:["24","20","18","22"],
+answer:"24"
 },
 
 {
 level:2,
-type:"reading",
-passage:"The storm clouds grew darker and the wind started blowing hard. Emma quickly ran inside the house.",
-question:"Why did Emma go inside?",
-choices:["A storm was coming","She wanted food","She was bored","She saw a friend"],
+passage:"The sky became very dark and thunder started rumbling. Jake quickly closed the windows.",
+question:"Why did Jake close the windows?",
+choices:["A storm was coming","He was bored","He wanted to sleep","He saw a bird"],
 answer:"A storm was coming"
 },
 
 {
 level:2,
-type:"reading",
-passage:"Ben studied his spelling words every night before the test on Friday.",
-question:"What is Ben's goal?",
-choices:["To do well on the test","To skip school","To avoid homework","To play games"],
-answer:"To do well on the test"
+question:"You read 16 pages Monday and 18 pages Tuesday. How many pages total?",
+choices:["34","32","36","30"],
+answer:"34"
+},
+
+{
+level:2,
+passage:"During lunch a new student sat alone and looked nervous.",
+question:"What would be the kindest thing to do?",
+choices:["Invite them to sit with you","Ignore them","Laugh at them","Leave the room"],
+answer:"Invite them to sit with you"
+},
+
+// LEVEL 3
+{
+level:3,
+question:"A pack has 9 trading cards. If you buy 5 packs how many cards do you get?",
+choices:["45","40","42","48"],
+answer:"45"
+},
+
+{
+level:3,
+passage:"The ground was soaked and puddles were everywhere after the heavy rain.",
+question:"What does the word 'soaked' most likely mean?",
+choices:["Very wet","Very dry","Very clean","Very hot"],
+answer:"Very wet"
+},
+
+{
+level:3,
+question:"You save $7 each week for 6 weeks. How much money did you save?",
+choices:["42","36","40","48"],
+answer:"42"
 }
 
 ]
@@ -133,124 +153,89 @@ localStorage.setItem("level",level)
 }
 
 function renderMap(){
-
 let html=""
-
 for(let i=1;i<=20;i++){
-
-let className="levelNode"
-
-if(i<level) className+=" levelComplete"
-
-html+=`<div class="${className}">${i}</div>`
-
+let c="levelNode"
+if(i<level) c+=" levelComplete"
+html+=`<div class="${c}">${i}</div>`
 }
-
 document.getElementById("map").innerHTML=html
-
 }
 
 function startGame(){
-
 document.getElementById("startBtn").style.display="none"
-nextQuestion()
-
+loadLevel()
+showQuestion()
 }
 
-function getQuestionsForLevel(){
-
-return questionBank.filter(q=>q.level===level)
-
+function loadLevel(){
+currentQuestions = questionBank.filter(q=>q.level===level)
+incorrectQuestions = []
+currentIndex = 0
 }
 
-function nextQuestion(){
+function getNextQuestion(){
 
-let pool
-
-if(incorrectQueue.length>0){
-
-pool=incorrectQueue
-
-}else{
-
-pool=getQuestionsForLevel()
-
+if(currentIndex < currentQuestions.length){
+return currentQuestions[currentIndex]
 }
 
-if(currentQuestionIndex>=pool.length){
-
-if(incorrectQueue.length>0){
-
-pool=incorrectQueue
-currentQuestionIndex=0
-incorrectQueue=[]
-
-}else{
+if(incorrectQuestions.length > 0){
+currentQuestions = [...incorrectQuestions]
+incorrectQuestions = []
+currentIndex = 0
+return currentQuestions[currentIndex]
+}
 
 level++
-currentQuestionIndex=0
-save()
-renderMap()
-
-pool=getQuestionsForLevel()
+loadLevel()
+return currentQuestions[currentIndex]
 
 }
 
+function showQuestion(){
+
+currentQuestion = getNextQuestion()
+
+if(!currentQuestion){
+document.getElementById("question").innerText="Game complete!"
+return
 }
 
-currentQuestion=pool[currentQuestionIndex]
-
-showQuestion(currentQuestion)
-
-}
-
-function showQuestion(q){
+currentIndex++
 
 document.getElementById("feedback").innerText=""
 
-if(q.passage){
+document.getElementById("passage").innerText=currentQuestion.passage || ""
 
-document.getElementById("passage").innerText=q.passage
-
-}else{
-
-document.getElementById("passage").innerText=""
-
-}
-
-
-document.getElementById("question").innerText=q.question
+document.getElementById("question").innerText=currentQuestion.question
 
 let html=""
 
-q.choices.forEach(c=>{
-
+currentQuestion.choices.forEach(c=>{
 html+=`<button class='choice' onclick="answer('${c}')">${c}</button>`
-
 })
 
+
 document.getElementById("choices").innerHTML=html
+
+updateUI()
 
 }
 
 function answer(choice){
 
 if(choice===currentQuestion.answer){
-
 score++
-
-currentQuestionIndex++
-
+document.getElementById("feedback").innerText="✅ Correct"
 }else{
-
-incorrectQueue.push(currentQuestion)
-currentQuestionIndex++
-
+incorrectQuestions.push(currentQuestion)
+document.getElementById("feedback").innerText="❌ Incorrect"
 }
 
-updateUI()
+save()
 
-setTimeout(nextQuestion,600)
+setTimeout(showQuestion,800)
 
 }
 
@@ -260,7 +245,7 @@ document.getElementById("score").innerText="Score: "+score
 
 document.getElementById("level").innerText="Level: "+level
 
-save()
+renderMap()
 
 }
 
@@ -278,7 +263,7 @@ function resumeGame(){
 document.getElementById("helpBox").style.display="none"
 document.getElementById("resumeBtn").style.display="none"
 
-showQuestion(currentQuestion)
+showQuestion()
 
 }
 
