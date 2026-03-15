@@ -1,44 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Learning Adventure</title>
+<title>Reading & Math Challenge</title>
 
 <style>
 body{
 font-family:Arial;
-background:#87CEEB;
+background:#8ecae6;
 text-align:center;
 padding:30px;
 }
 
 #game{
 background:white;
-padding:25px;
+padding:30px;
 border-radius:15px;
-max-width:650px;
+max-width:700px;
 margin:auto;
-box-shadow:0 0 10px rgba(0,0,0,0.2);
+box-shadow:0 0 15px rgba(0,0,0,0.2);
 }
 
 button{
-padding:10px 20px;
-margin:10px;
+padding:10px 18px;
+margin:8px;
 border:none;
+border-radius:8px;
 background:#4CAF50;
 color:white;
-border-radius:8px;
 font-size:16px;
 cursor:pointer;
 }
 
 button:hover{
-background:#3e8e41;
+background:#388e3c;
 }
 
-input{
-padding:10px;
+textarea{
+width:80%;
+height:80px;
 font-size:16px;
-width:60%;
+padding:10px;
 }
 
 #passage{
@@ -53,117 +54,152 @@ margin:20px;
 
 <div id="game">
 
-<h1>📚 Learning Adventure</h1>
+<h1>📚 Reading & Math Challenge</h1>
 
-<p id="intro">
-Welcome!  
-Answer the reading and math questions to earn points.
-Read the story carefully before answering!
+<p>
+Read the story or problem.  
+Type your answer.  
+A helper can approve your answer if it makes sense!
 </p>
 
-<p id="passage"></p>
+<h3 id="level">Level: 1</h3>
+<h3 id="score">Score: 0</h3>
 
+<p id="passage"></p>
 <h3 id="question"></h3>
 
-<input id="answer" placeholder="Type your answer here">
+<textarea id="answer" placeholder="Type your answer here"></textarea>
 
 <br>
 
-<button onclick="checkAnswer()">Submit</button>
-<button onclick="nextQuestion()">Next</button>
+<button onclick="approve()">✔ Approve Answer</button>
+<button onclick="next()">Next Question</button>
 
 <p id="feedback"></p>
-<h3 id="score">Score: 0</h3>
 
 </div>
 
 <script>
 
 let score = 0
-let answer = ""
+let level = 1
 
-const reading = [
+const readingEasy = [
 
 {
-passage:"Emma brought her dog to the park. The dog was thirsty after running around all day.",
-question:"What should Emma do for her dog?",
-answer:"give it water"
+passage:"Sam forgot his lunch at home. At school he started to feel hungry.",
+question:"What could Sam do to solve his problem?"
 },
 
 {
-passage:"Jake studied his spelling words every night before the test.",
-question:"Why did Jake study every night?",
-answer:"to do well on the test"
-},
-
-{
-passage:"Lily saw trash on the playground. No one else was picking it up.",
-question:"What would be the best thing for Lily to do?",
-answer:"pick up the trash"
+passage:"A strong wind knocked over Mia’s bike in the yard.",
+question:"What should Mia do next?"
 }
 
 ]
 
-const math = [
+const readingMedium = [
 
 {
-q:"Tom has 5 apples. His friend gives him 3 more. How many apples does he have?",
-a:"8"
+passage:"Lucas saw a new student sitting alone at lunch.",
+question:"What would be a kind thing for Lucas to do?"
 },
 
 {
-q:"Sara has 12 cookies and shares them with 3 friends equally. How many cookies does each friend get?",
-a:"4"
-},
-
-{
-q:"A toy costs $6. You buy 2 toys. How much money do you spend?",
-a:"12"
+passage:"The classroom plants looked dry and the soil was cracking.",
+question:"What should the students do?"
 }
 
 ]
 
-function nextQuestion(){
+const mathEasy = [
 
-document.getElementById("feedback").innerText=""
+{
+q:"You have 4 cookies. Your friend gives you 3 more. How many do you have now?"
+},
+
+{
+q:"There are 5 birds on a fence. 2 fly away. How many are left?"
+}
+
+]
+
+const mathMedium = [
+
+{
+q:"A box has 6 toy cars. You buy 3 boxes. How many cars do you have?"
+},
+
+{
+q:"You read 8 pages on Monday and 9 pages on Tuesday. How many pages total?"
+}
+
+]
+
+function next(){
+
 document.getElementById("answer").value=""
+document.getElementById("feedback").innerText=""
 
-if(Math.random()>0.5){
+let type = Math.random()
 
-let r = reading[Math.floor(Math.random()*reading.length)]
+if(level === 1){
+
+if(type < .5){
+
+let r = readingEasy[Math.floor(Math.random()*readingEasy.length)]
 
 document.getElementById("passage").innerText=r.passage
 document.getElementById("question").innerText=r.question
 
-answer = r.answer
-
 }else{
 
-let m = math[Math.floor(Math.random()*math.length)]
+let m = mathEasy[Math.floor(Math.random()*mathEasy.length)]
 
 document.getElementById("passage").innerText=""
 document.getElementById("question").innerText=m.q
 
-answer = m.a
-
 }
 
 }
 
-function checkAnswer(){
+else{
 
-let user = document.getElementById("answer").value.toLowerCase()
+if(type < .5){
 
-if(user.includes(answer)){
-score++
-document.getElementById("feedback").innerText="✅ Correct!"
+let r = readingMedium[Math.floor(Math.random()*readingMedium.length)]
+
+document.getElementById("passage").innerText=r.passage
+document.getElementById("question").innerText=r.question
+
 }else{
-document.getElementById("feedback").innerText="❌ Try again!"
+
+let m = mathMedium[Math.floor(Math.random()*mathMedium.length)]
+
+document.getElementById("passage").innerText=""
+document.getElementById("question").innerText=m.q
+
 }
 
-document.getElementById("score").innerText="Score: "+score
+}
 
 }
+
+function approve(){
+
+score++
+
+if(score % 5 === 0){
+level++
+}
+
+document.getElementById("score").innerText="Score: " + score
+document.getElementById("level").innerText="Level: " + level
+document.getElementById("feedback").innerText="✅ Answer Approved!"
+
+}
+
+next()
 
 </script>
 
