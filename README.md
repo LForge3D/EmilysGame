@@ -1,205 +1,229 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Reading & Math Challenge</title>
-
+<meta charset="UTF-8">
+<title>Learning Adventure</title>
 <style>
-body{
-font-family:Arial;
-background:#8ecae6;
-text-align:center;
-padding:30px;
-}
-
-#game{
-background:white;
-padding:30px;
-border-radius:15px;
-max-width:700px;
-margin:auto;
-box-shadow:0 0 15px rgba(0,0,0,0.2);
-}
-
-button{
-padding:10px 18px;
-margin:8px;
-border:none;
-border-radius:8px;
-background:#4CAF50;
-color:white;
-font-size:16px;
-cursor:pointer;
-}
-
-button:hover{
-background:#388e3c;
-}
-
-textarea{
-width:80%;
-height:80px;
-font-size:16px;
-padding:10px;
-}
-
-#passage{
-font-size:18px;
-margin:20px;
-}
-
+body{font-family:Arial;background:#7ec8ff;margin:0;text-align:center}
+#game{max-width:900px;margin:auto;background:white;padding:25px;border-radius:14px;margin-top:30px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+h1{margin-top:0}
+button{padding:10px 18px;margin:8px;font-size:16px;border:none;border-radius:8px;background:#4CAF50;color:white;cursor:pointer}
+button:hover{background:#388e3c}
+.choice{display:block;margin:8px auto;width:70%;background:#eee;color:black}
+.choice:hover{background:#ddd}
+#passage{font-size:18px;margin:20px}
+#map{display:flex;flex-wrap:wrap;justify-content:center;margin:15px 0}
+.levelNode{width:50px;height:50px;margin:6px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#ddd;font-weight:bold}
+.levelComplete{background:#4CAF50;color:white}
+#badges{margin-top:10px}
+.badge{display:inline-block;background:#ffd54f;padding:6px 10px;border-radius:8px;margin:4px;font-size:14px}
 </style>
 </head>
 
 <body>
-
 <div id="game">
+<h1>📚 Learning Adventure</h1>
 
-<h1>📚 Reading & Math Challenge</h1>
-
-<p>
-Read the story or problem.  
-Type your answer.  
-A helper can approve your answer if it makes sense!
-</p>
+<p id="intro">Press Start to begin your learning adventure!</p>
 
 <h3 id="level">Level: 1</h3>
 <h3 id="score">Score: 0</h3>
 
+<div id="map"></div>
+
 <p id="passage"></p>
 <h3 id="question"></h3>
+<div id="choices"></div>
 
-<textarea id="answer" placeholder="Type your answer here"></textarea>
-
-<br>
-
-<button onclick="approve()">✔ Approve Answer</button>
-<button onclick="next()">Next Question</button>
+<button onclick="nextQuestion()">Start / Next Question</button>
 
 <p id="feedback"></p>
+
+<h3>🏆 Badges</h3>
+<div id="badges"></div>
 
 </div>
 
 <script>
 
-let score = 0
-let level = 1
+let score = Number(localStorage.getItem("score")) || 0
+let level = Number(localStorage.getItem("level")) || 1
 
-const readingEasy = [
+let correctAnswer = ""
 
+function save(){
+localStorage.setItem("score",score)
+localStorage.setItem("level",level)
+}
+
+function updateUI(){
+
+document.getElementById("score").innerText="Score: "+score
+
+document.getElementById("level").innerText="Level: "+level
+
+renderMap()
+checkBadges()
+
+}
+
+function renderMap(){
+
+let mapHTML=""
+
+for(let i=1;i<=20;i++){
+
+let className="levelNode"
+
+if(i<level) className+=" levelComplete"
+
+mapHTML+=`<div class="${className}">${i}</div>`
+
+}
+
+document.getElementById("map").innerHTML=mapHTML
+
+}
+
+function generateMath(level){
+
+let a=Math.floor(Math.random()*10*level)+2
+let b=Math.floor(Math.random()*10)+2
+
+let answer=a*b
+
+return{
+passage:"",
+question:`If you buy ${a} packs of stickers and each pack has ${b} stickers, how many stickers do you have?`,
+choices:[answer,answer+5,answer-3,answer+7].sort(()=>Math.random()-.5),
+answer:String(answer)
+}
+
+}
+
+function readingBank(){
+
+return[
 {
-passage:"Sam forgot his lunch at home. At school he started to feel hungry.",
-question:"What could Sam do to solve his problem?"
+passage:"Maya noticed her friend looked sad and wasn't talking during recess.",
+question:"What would be the BEST thing Maya could do?",
+choices:[
+"Ignore her",
+"Ask if she is okay",
+"Laugh at her",
+"Tell everyone"
+],
+answer:"Ask if she is okay"
 },
 
 {
-passage:"A strong wind knocked over Mia’s bike in the yard.",
-question:"What should Mia do next?"
+passage:"The class pet hamster has an empty water bottle.",
+question:"What should the students do?",
+choices:[
+"Give it water",
+"Put it outside",
+"Ignore it",
+"Turn off lights"
+],
+answer:"Give it water"
+},
+
+{
+passage:"Jordan studied every night for his spelling test.",
+question:"Why did Jordan study each night?",
+choices:[
+"To do well on the test",
+"Because he was bored",
+"To skip school",
+"To lose the test"
+],
+answer:"To do well on the test"
 }
 
 ]
 
-const readingMedium = [
-
-{
-passage:"Lucas saw a new student sitting alone at lunch.",
-question:"What would be a kind thing for Lucas to do?"
-},
-
-{
-passage:"The classroom plants looked dry and the soil was cracking.",
-question:"What should the students do?"
 }
 
-]
+function nextQuestion(){
 
-const mathEasy = [
+let type=Math.random()
 
-{
-q:"You have 4 cookies. Your friend gives you 3 more. How many do you have now?"
-},
+let q
 
-{
-q:"There are 5 birds on a fence. 2 fly away. How many are left?"
+if(type<.5){
+
+q=generateMath(level)
+
+}else{
+
+let bank=readingBank()
+
+q=bank[Math.floor(Math.random()*bank.length)]
+
 }
 
-]
+correctAnswer=q.answer
 
-const mathMedium = [
+let choiceHTML=""
 
-{
-q:"A box has 6 toy cars. You buy 3 boxes. How many cars do you have?"
-},
+q.choices.forEach(c=>{
+choiceHTML+=`<button class="choice" onclick="checkAnswer('${c}')">${c}</button>`
+})
 
-{
-q:"You read 8 pages on Monday and 9 pages on Tuesday. How many pages total?"
-}
 
-]
+document.getElementById("passage").innerText=q.passage
 
-function next(){
+document.getElementById("question").innerText=q.question
 
-document.getElementById("answer").value=""
+document.getElementById("choices").innerHTML=choiceHTML
+
 document.getElementById("feedback").innerText=""
 
-let type = Math.random()
-
-if(level === 1){
-
-if(type < .5){
-
-let r = readingEasy[Math.floor(Math.random()*readingEasy.length)]
-
-document.getElementById("passage").innerText=r.passage
-document.getElementById("question").innerText=r.question
-
-}else{
-
-let m = mathEasy[Math.floor(Math.random()*mathEasy.length)]
-
-document.getElementById("passage").innerText=""
-document.getElementById("question").innerText=m.q
+document.getElementById("intro").innerText=""
 
 }
 
-}
+function checkAnswer(choice){
 
-else{
-
-if(type < .5){
-
-let r = readingMedium[Math.floor(Math.random()*readingMedium.length)]
-
-document.getElementById("passage").innerText=r.passage
-document.getElementById("question").innerText=r.question
-
-}else{
-
-let m = mathMedium[Math.floor(Math.random()*mathMedium.length)]
-
-document.getElementById("passage").innerText=""
-document.getElementById("question").innerText=m.q
-
-}
-
-}
-
-}
-
-function approve(){
+if(choice==correctAnswer){
 
 score++
 
-if(score % 5 === 0){
-level++
+if(score%5===0) level++
+
+document.getElementById("feedback").innerText="✅ Correct!"
+
+}else{
+
+document.getElementById("feedback").innerText="❌ Incorrect"
+
 }
 
-document.getElementById("score").innerText="Score: " + score
-document.getElementById("level").innerText="Level: " + level
-document.getElementById("feedback").innerText="✅ Answer Approved!"
+save()
+updateUI()
 
 }
 
-next()
+function checkBadges(){
+
+let badges=[]
+
+if(score>=5) badges.push("Starter Brain 🧠")
+if(score>=15) badges.push("Math Explorer ➗")
+if(score>=30) badges.push("Reading Hero 📚")
+if(score>=50) badges.push("Learning Master 🏆")
+
+let html=""
+
+badges.forEach(b=>{
+html+=`<div class="badge">${b}</div>`
+})
+
+document.getElementById("badges").innerHTML=html
+
+}
+
+updateUI()
 
 </script>
 
