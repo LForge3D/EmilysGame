@@ -13,10 +13,9 @@ button:hover{background:#388e3c}
 .choice:hover{background:#ddd}
 #passage{font-size:18px;margin:20px}
 #map{display:flex;flex-wrap:wrap;justify-content:center;margin:15px 0}
-.levelNode{width:50px;height:50px;margin:6px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#ddd;font-weight:bold}
+.levelNode{width:40px;height:40px;margin:5px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#ddd;font-weight:bold}
 .levelComplete{background:#4CAF50;color:white}
-#badges{margin-top:10px}
-.badge{display:inline-block;background:#ffd54f;padding:6px 10px;border-radius:8px;margin:4px;font-size:14px}
+#helpBox{display:none;background:#fff3cd;border:2px solid #f0c36d;padding:15px;border-radius:10px;margin-top:10px}
 </style>
 </head>
 
@@ -35,12 +34,13 @@ button:hover{background:#388e3c}
 <h3 id="question"></h3>
 <div id="choices"></div>
 
-<button onclick="nextQuestion()">Start / Next Question</button>
+<button id="startBtn" onclick="startGame()">Start Game</button>
+<button onclick="showHelp()">Help</button>
+
+<div id="helpBox">⏸ Game Paused.<br>Ask an adult, teacher, or older sibling for help. When you are ready press Resume.</div>
+<button id="resumeBtn" style="display:none" onclick="resumeGame()">Resume</button>
 
 <p id="feedback"></p>
-
-<h3>🏆 Badges</h3>
-<div id="badges"></div>
 
 </div>
 
@@ -49,11 +49,209 @@ button:hover{background:#388e3c}
 let score = Number(localStorage.getItem("score")) || 0
 let level = Number(localStorage.getItem("level")) || 1
 
-let correctAnswer = ""
+let currentQuestionIndex = 0
+let incorrectQueue = []
+let currentQuestion = null
+
+const questionBank = [
+
+// Level 1 easier
+{
+level:1,
+type:"math",
+question:"You have 5 apples. You get 4 more. How many apples now?",
+choices:["9","7","8","10"],
+answer:"9"
+},
+
+{
+level:1,
+type:"math",
+question:"There are 12 cookies. 3 are eaten. How many are left?",
+choices:["9","8","10","7"],
+answer:"9"
+},
+
+{
+level:1,
+type:"reading",
+passage:"Liam was exhausted after running the race. He sat down and drank a big bottle of water.",
+question:"What does the word 'exhausted' most likely mean?",
+choices:["Very tired","Very excited","Very angry","Very hungry"],
+answer:"Very tired"
+},
+
+{
+level:1,
+type:"reading",
+passage:"Sophie dropped her ice cream on the ground. A little boy nearby started to cry because he lost his toy.",
+question:"What would be a kind thing for Sophie to do?",
+choices:["Help the boy look for the toy","Ignore him","Laugh at him","Walk away"],
+answer:"Help the boy look for the toy"
+},
+
+// Level 2
+{
+level:2,
+type:"math",
+question:"Each box has 6 pencils. If you have 3 boxes how many pencils total?",
+choices:["18","12","15","20"],
+answer:"18"
+},
+
+{
+level:2,
+type:"math",
+question:"You read 14 pages Monday and 11 Tuesday. How many total?",
+choices:["25","24","26","23"],
+answer:"25"
+},
+
+{
+level:2,
+type:"reading",
+passage:"The storm clouds grew darker and the wind started blowing hard. Emma quickly ran inside the house.",
+question:"Why did Emma go inside?",
+choices:["A storm was coming","She wanted food","She was bored","She saw a friend"],
+answer:"A storm was coming"
+},
+
+{
+level:2,
+type:"reading",
+passage:"Ben studied his spelling words every night before the test on Friday.",
+question:"What is Ben's goal?",
+choices:["To do well on the test","To skip school","To avoid homework","To play games"],
+answer:"To do well on the test"
+}
+
+]
 
 function save(){
 localStorage.setItem("score",score)
 localStorage.setItem("level",level)
+}
+
+function renderMap(){
+
+let html=""
+
+for(let i=1;i<=20;i++){
+
+let className="levelNode"
+
+if(i<level) className+=" levelComplete"
+
+html+=`<div class="${className}">${i}</div>`
+
+}
+
+document.getElementById("map").innerHTML=html
+
+}
+
+function startGame(){
+
+document.getElementById("startBtn").style.display="none"
+nextQuestion()
+
+}
+
+function getQuestionsForLevel(){
+
+return questionBank.filter(q=>q.level===level)
+
+}
+
+function nextQuestion(){
+
+let pool
+
+if(incorrectQueue.length>0){
+
+pool=incorrectQueue
+
+}else{
+
+pool=getQuestionsForLevel()
+
+}
+
+if(currentQuestionIndex>=pool.length){
+
+if(incorrectQueue.length>0){
+
+pool=incorrectQueue
+currentQuestionIndex=0
+incorrectQueue=[]
+
+}else{
+
+level++
+currentQuestionIndex=0
+save()
+renderMap()
+
+pool=getQuestionsForLevel()
+
+}
+
+}
+
+currentQuestion=pool[currentQuestionIndex]
+
+showQuestion(currentQuestion)
+
+}
+
+function showQuestion(q){
+
+document.getElementById("feedback").innerText=""
+
+if(q.passage){
+
+document.getElementById("passage").innerText=q.passage
+
+}else{
+
+document.getElementById("passage").innerText=""
+
+}
+
+
+document.getElementById("question").innerText=q.question
+
+let html=""
+
+q.choices.forEach(c=>{
+
+html+=`<button class='choice' onclick="answer('${c}')">${c}</button>`
+
+})
+
+document.getElementById("choices").innerHTML=html
+
+}
+
+function answer(choice){
+
+if(choice===currentQuestion.answer){
+
+score++
+
+currentQuestionIndex++
+
+}else{
+
+incorrectQueue.push(currentQuestion)
+currentQuestionIndex++
+
+}
+
+updateUI()
+
+setTimeout(nextQuestion,600)
+
 }
 
 function updateUI(){
@@ -62,167 +260,29 @@ document.getElementById("score").innerText="Score: "+score
 
 document.getElementById("level").innerText="Level: "+level
 
-renderMap()
-checkBadges()
-
-}
-
-function renderMap(){
-
-let mapHTML=""
-
-for(let i=1;i<=20;i++){
-
-let className="levelNode"
-
-if(i<level) className+=" levelComplete"
-
-mapHTML+=`<div class="${className}">${i}</div>`
-
-}
-
-document.getElementById("map").innerHTML=mapHTML
-
-}
-
-function generateMath(level){
-
-let a=Math.floor(Math.random()*10*level)+2
-let b=Math.floor(Math.random()*10)+2
-
-let answer=a*b
-
-return{
-passage:"",
-question:`If you buy ${a} packs of stickers and each pack has ${b} stickers, how many stickers do you have?`,
-choices:[answer,answer+5,answer-3,answer+7].sort(()=>Math.random()-.5),
-answer:String(answer)
-}
-
-}
-
-function readingBank(){
-
-return[
-{
-passage:"Maya noticed her friend looked sad and wasn't talking during recess.",
-question:"What would be the BEST thing Maya could do?",
-choices:[
-"Ignore her",
-"Ask if she is okay",
-"Laugh at her",
-"Tell everyone"
-],
-answer:"Ask if she is okay"
-},
-
-{
-passage:"The class pet hamster has an empty water bottle.",
-question:"What should the students do?",
-choices:[
-"Give it water",
-"Put it outside",
-"Ignore it",
-"Turn off lights"
-],
-answer:"Give it water"
-},
-
-{
-passage:"Jordan studied every night for his spelling test.",
-question:"Why did Jordan study each night?",
-choices:[
-"To do well on the test",
-"Because he was bored",
-"To skip school",
-"To lose the test"
-],
-answer:"To do well on the test"
-}
-
-]
-
-}
-
-function nextQuestion(){
-
-let type=Math.random()
-
-let q
-
-if(type<.5){
-
-q=generateMath(level)
-
-}else{
-
-let bank=readingBank()
-
-q=bank[Math.floor(Math.random()*bank.length)]
-
-}
-
-correctAnswer=q.answer
-
-let choiceHTML=""
-
-q.choices.forEach(c=>{
-choiceHTML+=`<button class="choice" onclick="checkAnswer('${c}')">${c}</button>`
-})
-
-
-document.getElementById("passage").innerText=q.passage
-
-document.getElementById("question").innerText=q.question
-
-document.getElementById("choices").innerHTML=choiceHTML
-
-document.getElementById("feedback").innerText=""
-
-document.getElementById("intro").innerText=""
-
-}
-
-function checkAnswer(choice){
-
-if(choice==correctAnswer){
-
-score++
-
-if(score%5===0) level++
-
-document.getElementById("feedback").innerText="✅ Correct!"
-
-}else{
-
-document.getElementById("feedback").innerText="❌ Incorrect"
-
-}
-
 save()
-updateUI()
 
 }
 
-function checkBadges(){
+function showHelp(){
 
-let badges=[]
+document.getElementById("helpBox").style.display="block"
+document.getElementById("resumeBtn").style.display="inline-block"
 
-if(score>=5) badges.push("Starter Brain 🧠")
-if(score>=15) badges.push("Math Explorer ➗")
-if(score>=30) badges.push("Reading Hero 📚")
-if(score>=50) badges.push("Learning Master 🏆")
-
-let html=""
-
-badges.forEach(b=>{
-html+=`<div class="badge">${b}</div>`
-})
-
-document.getElementById("badges").innerHTML=html
+document.getElementById("choices").innerHTML=""
 
 }
 
+function resumeGame(){
+
+document.getElementById("helpBox").style.display="none"
+document.getElementById("resumeBtn").style.display="none"
+
+showQuestion(currentQuestion)
+
+}
+
+renderMap()
 updateUI()
 
 </script>
